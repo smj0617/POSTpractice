@@ -59,3 +59,26 @@ Spring Boot로 게시판의 **글·댓글 조회와 삭제** API를 한 단계�
 ![2단계 결과 - 글](docs/images/step2-post.png)
 
 ![2단계 결과 - 댓글](docs/images/step2-comment.png)
+
+---
+
+## 3단계: 글 다건조회 `GET /api/v1/posts`
+
+### 추가된 것
+- `PostService.findAll()`
+- `ApiV1PostController`: `@RestController` + `@RequestMapping("/api/v1/posts")`, `@GetMapping`으로 글 목록 반환
+- `PostComment.post`에 `@JsonIgnore`
+
+### 3-1. Before: 엔티티를 그대로 반환하면 순환참조
+- 요청: http://localhost:8080/api/v1/posts
+- 결과: `글 → 댓글 → 글 → 댓글 …`이 끝없이 중첩되다가 Jackson의 중첩 깊이 한도에서 끊깁니다.
+  - Jackson은 JSON을 만들 때 모든 getter를 호출합니다. `Post.getComments()` → `PostComment.getPost()` → `Post.getComments()` … 로 무한 반복됩니다.
+  - 응답을 이미 보내기 시작한 뒤라 상태코드는 200인데 JSON은 깨져 있습니다.
+
+![3단계 Before - 순환참조](docs/images/step3-before.png)
+
+### 3-2. After: `@JsonIgnore`로 `댓글 → 글` 방향을 끊음
+- 결과: 글 3개가 정상 JSON으로 나오고, 각 글의 `comments`에는 `post` 없이 댓글 정보만 들어 있습니다.
+- 한계: 엔티티를 그대로 내보내면 DB 구조가 API에 노출되고, 엔티티를 고칠 때마다 API 모양도 바뀝니다. → 4단계에서 `PostDto` 도입
+
+![3단계 After - 정상 응답](docs/images/step3-after.png)
