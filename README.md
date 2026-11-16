@@ -103,3 +103,37 @@ Spring Boot로 게시판의 **글·댓글 조회와 삭제** API를 한 단계�
 ![4단계 결과 - 단건조회](docs/images/step4-detail.png)
 
 - 없는 글: http://localhost:8080/api/v1/posts/999 → `NoSuchElementException`으로 500 에러 (범위 밖이라 처리하지 않음)
+
+---
+
+## 5단계: 댓글 다건·단건조회와 `PostCommentDto`
+
+### 추가된 것
+- `PostCommentDto` (record): `id`, `createDate`, `modifyDate`, `content`
+- `Post.findCommentById(id)`: 이 글의 댓글 리스트 안에서만 찾음
+- `ApiV1PostCommentController`: `@RequestMapping("/api/v1/posts/{postId}/comments")`
+  - 다건조회 `GET /api/v1/posts/{postId}/comments`
+  - 단건조회 `GET /api/v1/posts/{postId}/comments/{id}`
+  - 항상 **글을 먼저 찾고, 그 글의 댓글 중에서** 찾습니다.
+
+### 동작 확인
+
+| 요청 | 결과 |
+|---|---|
+| `/api/v1/posts/1/comments` | 200, 댓글 1-1, 1-2, 1-3 |
+| `/api/v1/posts/2/comments` | 200, 댓글 2-1, 2-2 |
+| `/api/v1/posts/3/comments` | 200, `[]` |
+| `/api/v1/posts/1/comments/2` | 200, 댓글 1-2 |
+| `/api/v1/posts/2/comments/1` | 500, 1번 댓글은 1번 글 소속이라 2번 글의 댓글 중에는 없음 |
+
+- 1번 글의 댓글 목록
+
+![5단계 결과 - 댓글 다건조회](docs/images/step5-list.png)
+
+- 1번 글의 2번 댓글
+
+![5단계 결과 - 댓글 단건조회](docs/images/step5-detail.png)
+
+- 2번 글에서 1번 댓글 요청 → 소속이 달라서 찾지 못함
+
+![5단계 결과 - 소속이 다른 댓글](docs/images/step5-mismatch.png)
