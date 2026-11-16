@@ -25,6 +25,10 @@ public class PostService {
         return post.deleteComment(postComment);
     }
 
+    public void delete(Post post){
+        postRepository.delete(post);
+    }
+
     public long count() {
         return postRepository.count();
     }

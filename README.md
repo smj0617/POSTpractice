@@ -173,3 +173,32 @@ Spring Boot로 게시판의 **글·댓글 조회와 삭제** API를 한 단계�
 - 이미 지운 3번 댓글을 다시 삭제하면 찾을 수 없어서 500 에러 (범위 밖)
 
 ![6단계 After - 이미 지운 댓글](docs/images/step6-after-delete-again.png)
+
+---
+
+## 7단계: 글 삭제 `GET /api/v1/posts/{id}/delete`
+
+### 추가된 것
+- `PostService.delete()`: `postRepository.delete(post)`
+- `ApiV1PostController.delete()`: `@Transactional`, `"N번 글이 삭제되었습니다."` 문자열 응답
+- 글을 지우면 댓글도 함께 지워짐: `Post.comments`의 `cascade = REMOVE` 덕분에 JPA가 댓글을 먼저 `DELETE`하고 그다음 글을 `DELETE`합니다. (댓글의 `post_id` 외래키가 글을 가리키고 있어서 순서가 중요합니다.)
+
+### 동작 확인
+- 삭제 전 댓글 테이블: 1번 글에 댓글 1-1, 1-2, 2번 글에 2-1
+
+![7단계 - 삭제 전 댓글](docs/images/step7-before-comments.png)
+
+- 요청: `/api/v1/posts/1/delete`
+
+![7단계 - 삭제 응답](docs/images/step7-delete.png)
+
+- 글 목록: 2, 3번 글만 남음
+
+![7단계 - 삭제 후 글 목록](docs/images/step7-after-posts.png)
+
+- 댓글 테이블: 1번 글의 댓글 1-1, 1-2도 함께 사라지고 2-1만 남음
+
+![7단계 - 삭제 후 댓글](docs/images/step7-after-comments.png)
+
+### 진행 중 실수와 교훈
+- 글 삭제 메서드를 `ApiV1PostCommentController`의 댓글 삭제 메서드 자리에 덮어써서 `/api/v1/posts/1/delete`가 404가 났습니다. 같은 주소 패턴(`/{id}/delete`)이라도 **어느 컨트롤러에 있느냐**에 따라 `@RequestMapping` 앞부분이 달라져 전혀 다른 URL이 됩니다. 댓글 컨트롤러는 `git restore`로 되돌리고 글 컨트롤러에 다시 넣어 해결했습니다.

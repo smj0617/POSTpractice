@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -34,5 +35,17 @@ public class ApiV1PostController {
         Post post = postService.findById(id).get();   // 없으면 예외 (이번 범위에선 처리 안 함)
 
         return new PostDto(post);
+    }
+
+    @GetMapping("/{id}/delete")    // GET /api/v1/posts/1/delete
+    @Transactional
+    public String delete(
+            @PathVariable int id
+    ) {
+        Post post = postService.findById(id).get();   // 1) 글을 찾고
+
+        postService.delete(post);                     // 2) 삭제
+
+        return "%d번 글이 삭제되었습니다.".formatted(id);   // 8단계에서 RsData로 변경
     }
 }
