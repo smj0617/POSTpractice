@@ -137,3 +137,39 @@ Spring Boot로 게시판의 **글·댓글 조회와 삭제** API를 한 단계�
 - 2번 글에서 1번 댓글 요청 → 소속이 달라서 찾지 못함
 
 ![5단계 결과 - 소속이 다른 댓글](docs/images/step5-mismatch.png)
+
+---
+
+## 6단계: 댓글 삭제 `GET /api/v1/posts/{postId}/comments/{id}/delete`
+
+### 추가된 것
+- `Post.deleteComment()`: 글의 댓글 리스트에서 댓글을 뺌 (`orphanRemoval = true`라서 리스트에서 빠진 댓글은 DB에서도 삭제 대상)
+- `PostService.deleteComment()`
+- `ApiV1PostCommentController.delete()`: 글 → 그 글의 댓글 순서로 찾은 뒤 삭제, `"N번 댓글이 삭제되었습니다."` 문자열 응답
+- 삭제 메서드에 `@Transactional`
+
+### 6-1. Before: `@Transactional` 없이 삭제
+- 요청: `/api/v1/posts/1/comments/3/delete` → "3번 댓글이 삭제되었습니다." 라고 응답
+
+![6단계 Before - 삭제 응답](docs/images/step6-before-delete.png)
+
+- 그런데 다시 조회하면 댓글 1-3이 그대로 남아 있습니다. 콘솔에도 `delete` SQL이 없습니다.
+  - JPA는 변경 내용을 모아 두었다가 **트랜잭션이 커밋될 때** DB에 반영합니다. 트랜잭션이 없으니 자바 메모리의 리스트에서만 빠지고 끝납니다.
+
+![6단계 Before - 그대로 남은 댓글](docs/images/step6-before-list.png)
+
+### 6-2. After: `@Transactional` 추가
+- 메서드가 끝날 때 커밋되면서 JPA가 리스트에서 빠진 댓글을 감지하고 `delete from post_comment where id=?`를 실행합니다.
+- 1번 글 조회: 댓글 1-3이 사라지고 1-1, 1-2만 남음
+
+![6단계 After - 1번 글 댓글](docs/images/step6-after-list.png)
+
+- `/api/v1/posts/2/comments/5/delete` → 삭제 성공, 2번 글에는 댓글 2-1만 남음
+
+![6단계 After - 삭제 응답](docs/images/step6-after-delete.png)
+
+![6단계 After - 2번 글 댓글](docs/images/step6-after-list2.png)
+
+- 이미 지운 3번 댓글을 다시 삭제하면 찾을 수 없어서 500 에러 (범위 밖)
+
+![6단계 After - 이미 지운 댓글](docs/images/step6-after-delete-again.png)
