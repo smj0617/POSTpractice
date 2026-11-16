@@ -38,3 +38,24 @@ Spring Boot로 게시판의 **글·댓글 조회와 삭제** API를 한 단계�
   - 서버는 떠 있지만 `/` 주소를 처리할 코드가 아직 없어서 404가 나옵니다. 서버가 정상적으로 실행됐다는 뜻입니다.
 
 ![1단계 결과](docs/images/step1.png)
+
+---
+
+## 2단계: JPA·H2 추가, 엔티티, 샘플 데이터 자동 생성
+
+### 추가된 것
+- 의존성: Spring Data JPA, H2, H2 Console, Validation
+- `application.yaml`: H2 파일 DB(`./db_dev`) 연결, SQL 로그 출력, 테이블 자동 생성(`ddl-auto: update`)
+- `BaseEntity`: 모든 엔티티가 공통으로 갖는 `id`, `createDate`, `modifyDate` (`@EnableJpaAuditing`으로 날짜 자동 입력)
+- `Post`(글), `PostComment`(댓글) 엔티티: 글 1개 : 댓글 N개 (`@OneToMany` / `@ManyToOne`)
+  - 댓글은 `post.addComment()`로만 만들고, 글을 저장하면 댓글도 같이 저장(`cascade PERSIST`)
+- `PostRepository`, `PostService`
+- `BaseInitData`: 앱 시작 시 데이터가 없으면 글 3개, 댓글 5개를 자동 생성
+
+### 동작 확인
+- H2 콘솔: http://localhost:8080/h2-console (JDBC URL `jdbc:h2:./db_dev;MODE=MySQL`, User `sa`, 비밀번호 없음)
+- 결과: 글 3개, 댓글 5개가 생성됐고 댓글의 `POST_ID`로 어느 글에 달렸는지 알 수 있습니다. (1번 글에 3개, 2번 글에 2개)
+
+![2단계 결과 - 글](docs/images/step2-post.png)
+
+![2단계 결과 - 댓글](docs/images/step2-comment.png)
