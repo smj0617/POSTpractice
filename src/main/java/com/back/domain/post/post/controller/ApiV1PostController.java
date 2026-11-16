@@ -3,6 +3,7 @@ package com.back.domain.post.post.controller;
 import com.back.domain.post.post.dto.PostDto;
 import com.back.domain.post.post.entity.Post;
 import com.back.domain.post.post.service.PostService;
+import com.back.global.rsData.RsData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,13 +40,17 @@ public class ApiV1PostController {
 
     @GetMapping("/{id}/delete")    // GET /api/v1/posts/1/delete
     @Transactional
-    public String delete(
+    public RsData<PostDto> delete(
             @PathVariable int id
     ) {
         Post post = postService.findById(id).get();   // 1) 글을 찾고
 
         postService.delete(post);                     // 2) 삭제
 
-        return "%d번 글이 삭제되었습니다.".formatted(id);   // 8단계에서 RsData로 변경
+        return new RsData<>(
+                "200-1",
+                "%d번 글이 삭제되었습니다.".formatted(id),
+                new PostDto(post)               // data 칸: 방금 지운 글
+        );   // 8단계에서 RsData로 변경
     }
 }

@@ -202,3 +202,44 @@ Spring Boot로 게시판의 **글·댓글 조회와 삭제** API를 한 단계�
 
 ### 진행 중 실수와 교훈
 - 글 삭제 메서드를 `ApiV1PostCommentController`의 댓글 삭제 메서드 자리에 덮어써서 `/api/v1/posts/1/delete`가 404가 났습니다. 같은 주소 패턴(`/{id}/delete`)이라도 **어느 컨트롤러에 있느냐**에 따라 `@RequestMapping` 앞부분이 달라져 전혀 다른 URL이 됩니다. 댓글 컨트롤러는 `git restore`로 되돌리고 글 컨트롤러에 다시 넣어 해결했습니다.
+
+---
+
+## 8단계: `RsData<T>` 도입
+
+### 추가된 것
+- `RsData<T>` (record): `resultCode`, `msg`, `data` 세 칸으로 응답 모양을 통일
+  - `data`의 타입은 제네릭 `T`로 사용하는 쪽에서 정함
+  - `RsData(resultCode, msg)` 생성자: `data` 없이 쓸 때 (`null`)
+- 댓글 삭제: `String` → `RsData<Void>` (성공 여부와 메시지만)
+- 글 삭제: `String` → `RsData<PostDto>` (지워진 글 정보를 `data`에 담음)
+- 조회 API는 데이터 자체가 결과이므로 `RsData` 없이 DTO를 그대로 반환합니다.
+
+### 동작 확인
+- `/api/v1/posts/2/comments/4/delete` → `RsData<Void>`, `data`는 `null`
+
+![8단계 - 댓글 삭제 RsData](docs/images/step8-comment-delete.png)
+
+- `/api/v1/posts/3/delete` → `RsData<PostDto>`, `data`에 지워진 3번 글
+
+![8단계 - 글 삭제 RsData](docs/images/step8-post-delete.png)
+
+- 남은 글: 2번 글만
+
+![8단계 - 남은 글 목록](docs/images/step8-after-posts.png)
+
+---
+
+## 마무리
+
+6개 API를 모두 구현했습니다. 샘플 데이터를 처음 상태로 되돌리려면 앱을 끄고 `db_dev.mv.db`를 지운 뒤 다시 실행하면 됩니다.
+
+| 단계 | 배운 것 |
+|---|---|
+| 2 | 엔티티 = 테이블, 연관관계(`@OneToMany`/`@ManyToOne`), `ApplicationRunner`로 샘플 데이터 |
+| 3 | 엔티티를 그대로 JSON으로 내보내면 양방향 연관관계에서 순환참조 |
+| 4 | DTO(record)로 응답 모양을 직접 정함 |
+| 5 | 댓글은 항상 글을 통해서 찾음 |
+| 6 | JPA 변경은 트랜잭션 커밋 때 DB에 반영 (`@Transactional`) |
+| 7 | `cascade REMOVE`로 글과 댓글을 함께 삭제 |
+| 8 | `RsData<T>`로 행위 API의 응답 모양 통일 |
