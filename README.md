@@ -82,3 +82,24 @@ Spring Boot로 게시판의 **글·댓글 조회와 삭제** API를 한 단계�
 - 한계: 엔티티를 그대로 내보내면 DB 구조가 API에 노출되고, 엔티티를 고칠 때마다 API 모양도 바뀝니다. → 4단계에서 `PostDto` 도입
 
 ![3단계 After - 정상 응답](docs/images/step3-after.png)
+
+---
+
+## 4단계: `PostDto` 도입과 글 단건조회 `GET /api/v1/posts/{id}`
+
+### 추가된 것
+- `PostDto` (record): 엔티티 대신 응답에 쓰는 객체. `id`, `createDate`, `modifyDate`, `title`, `content`만 담고 `comments`는 뺌
+- 다건조회 반환 타입을 `List<Post>` → `List<PostDto>`로 변경 (`stream().map(PostDto::new).toList()`)
+- `PostService.findById()`, 단건조회 `@GetMapping("/{id}")` + `@PathVariable`
+
+### 동작 확인
+- 다건조회: http://localhost:8080/api/v1/posts
+  - 3단계와 달리 필드가 record에 선언한 순서(`id`부터)대로 나오고 `comments`가 없습니다.
+
+![4단계 결과 - 다건조회](docs/images/step4-list.png)
+
+- 단건조회: http://localhost:8080/api/v1/posts/1
+
+![4단계 결과 - 단건조회](docs/images/step4-detail.png)
+
+- 없는 글: http://localhost:8080/api/v1/posts/999 → `NoSuchElementException`으로 500 에러 (범위 밖이라 처리하지 않음)
