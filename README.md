@@ -30,7 +30,7 @@ Spring Boot로 게시판의 **글·댓글 조회와 삭제** API를 한 단계�
 ### 추가된 것
 - IntelliJ의 Spring Boot 마법사로 프로젝트를 생성했습니다.
 - 의존성: Spring Web MVC, Lombok, Spring Boot DevTools
-- 메인 클래스: `com.back.PosTpracticeApplication`
+- 메인 클래스: `com.back.BackApplication`
 
 ### 동작 확인
 - 요청: http://localhost:8080/
